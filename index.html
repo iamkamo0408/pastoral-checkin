@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>武昌學青牧區牧養回饋表單</title>
+<base target="_top">
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
+    margin: 0; background: #e9ebef; color: #1f2328; }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 14px; }
+  .card { background: #fff; border: 0.5px solid #e3e3e0; border-radius: 12px;
+    padding: 14px 16px; margin-bottom: 12px; }
+  h1 { font-size: 18px; font-weight: 500; margin: 0; }
+  .sub { font-size: 13px; color: #6b6b6b; margin: 2px 0 0; }
+  .step { font-size: 12px; color: #9a9a96; margin: 0 0 8px; }
+  label { font-size: 13px; color: #444; display: block; margin: 0 0 6px; }
+  select, input[type=text], input[type=date], textarea {
+    width: 100%; font-size: 15px; padding: 9px 10px; border: 0.5px solid #cfcfca;
+    border-radius: 8px; background: #fff; font-family: inherit; }
+  textarea { resize: vertical; }
+  .seg { display: flex; gap: 8px; }
+  .seg button { flex: 1; padding: 10px; font-size: 15px; border: 0.5px solid #cfcfca;
+    border-radius: 8px; background: #fff; color: #444; cursor: pointer; }
+  .seg button.sel { background: #E8852C; color: #fff; border-color: #E8852C; }
+  .stat { flex: 1; background: #f4f5f7; border-radius: 8px; padding: 8px 10px; }
+  .stat .n { font-size: 22px; font-weight: 500; color: #E8852C; }
+  .mrow { display: flex; align-items: flex-start; gap: 8px; padding: 9px 0;
+    border-bottom: 0.5px solid #eee; }
+  .mrow:last-child { border-bottom: none; }
+  .who { flex: 1; }
+  .nm { font-size: 15px; }
+  .tag { font-size: 11px; color: #8a5a00; background: #fbeed3; border-radius: 5px;
+    padding: 1px 6px; margin-left: 6px; }
+  .reason-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+  .reason-row > span { font-size: 12px; color: #8a8a86; white-space: nowrap; }
+  .reason-row .reason { max-width: 140px; font-size: 13px; padding: 5px 8px; }
+  .tog { padding: 7px 11px; border: 0.5px solid #cfcfca; border-radius: 8px;
+    font-size: 13px; background: #fff; color: #b0b0aa; cursor: pointer; }
+  .tog.on { background: #fbeed3; color: #b5651d; border-color: transparent; }
+  .srow { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .srow span { width: 56px; font-size: 14px; color: #444; }
+  .chk { display: flex; align-items: center; gap: 8px; font-size: 15px;
+    padding: 7px 0; }
+  .chk input { width: 18px; height: 18px; }
+  .nf { display: grid; grid-template-columns: 1fr; gap: 6px; padding: 8px;
+    border: 0.5px solid #eee; border-radius: 8px; margin-bottom: 8px; }
+  .addbtn { width: 100%; padding: 9px; font-size: 14px; border: 0.5px dashed #cfcfca;
+    border-radius: 8px; background: #fff; color: #444; cursor: pointer; }
+  .submit { width: 100%; padding: 13px; font-size: 16px; border: none;
+    border-radius: 10px; background: #E8852C; color: #fff; cursor: pointer; }
+  .submit:disabled { opacity: .5; }
+  .muted { font-size: 12px; color: #9a9a96; }
+  .ok { border: 0.5px solid #bfe0c7; }
+  .ok h1 { color: #1f7a3d; }
+  .hide { display: none; }
+  .remote-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px;
+    color: #444; margin-bottom: 10px; }
+  .bulk { display: flex; gap: 8px; margin-bottom: 10px; }
+  .bulk button { flex: 1; padding: 7px; font-size: 13px; border: 0.5px solid #cfcfca;
+    border-radius: 8px; background: #fff; color: #444; cursor: pointer; }
+  .spin { text-align: center; color: #9a9a96; font-size: 14px; padding: 16px; }
+  .foldhint { color: #9a9a96; font-weight: normal; font-size: 13px; }
+  .mnt-row { display: flex; align-items: center; gap: 8px; padding: 8px 0;
+    border-bottom: 0.5px solid #eee; }
+  .mnt-row:last-child { border-bottom: none; }
+  .mnt-row .nm { flex: 1; }
+  .mtog { padding: 6px 10px; border: 0.5px solid #cfcfca; border-radius: 8px;
+    font-size: 13px; background: #fff; color: #9a9a96; cursor: pointer; }
+  .mtog.remote.on { background: #fbeed3; color: #8a5a00; border-color: transparent; }
+  .mtog.leave.on { background: #fbe3e0; color: #b3261e; border-color: transparent; }
+  .new-name { margin-bottom: 2px; }
+  .rm { border: none; background: none; color: #b0b0aa; font-size: 16px;
+    cursor: pointer; padding: 4px 6px; line-height: 1; align-self: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="card">
+    <h1>武昌學青牧區牧養回饋表單</h1><p class="sub" id="today"></p>
+  </div>
+
+  <div class="card">
+    <p class="step">步驟 1 · 你是哪一區、哪一組</p>
+    <label>牧區</label>
+    <div class="seg" id="distseg">
+      <button data-d="國中">國中</button>
+      <button data-d="高中">高中</button>
+      <button data-d="大專">大專</button>
+      <button data-d="社青">社青</button>
+    </div>
+    <label style="margin-top:12px">小組</label>
+    <select id="groupsel"><option value="">— 先選牧區 —</option></select>
+    <label style="margin-top:12px">聚會日期</label>
+    <input type="date" id="mdate">
+    <label style="margin-top:12px">填報者（你的名字）</label>
+    <input type="text" id="leader" placeholder="例如：透透">
+  </div>
+
+  <div id="rosterArea" class="hide">
+    <div class="card">
+      <div style="display:flex;gap:10px">
+        <div class="stat"><div class="sub">崇拜出席</div><div class="n"><span id="congN">0</span>/<span id="totN">0</span></div></div>
+        <div class="stat"><div class="sub">小組出席</div><div class="n"><span id="grpN">0</span>/<span id="totN2">0</span></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="step">步驟 2 · 點掉沒來的人（橘＝有到）· 點掉後可補原因</p>
+      <label class="remote-toggle"><input type="checkbox" id="remoteChk"> 顯示外地生（寒暑假用）</label>
+      <div class="bulk"><button type="button" id="allIn">全部到</button><button type="button" id="allOut">全部沒來</button></div>
+      <div id="roster"></div>
+    </div>
+
+    <div class="card">
+      <p class="step" id="maintToggle" style="cursor:pointer;user-select:none">✏️ 整理這組名單（選填）　<span class="foldhint" id="maintHint">展開</span></p>
+      <div id="maintBody" class="hide">
+        <p class="muted" style="margin-top:0">標記外地生、新增漏建的組員、把離開的人移出。改動會在送出時一起更新，並記下是你改的。</p>
+        <div id="maintList"></div>
+        <button type="button" class="addbtn" id="addMember" style="margin-top:8px">＋ 新增在籍組員</button>
+        <p class="muted" style="margin:6px 0 0">新增的人會出現在上面點名單，本週就能一起點名。</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="step">步驟 3 · 新朋友</p>
+      <div id="returningArea" class="hide">
+        <label>回訪的新朋友（之前來過的，勾一下就好）</label>
+        <div id="returning"></div>
+        <div style="height:8px"></div>
+      </div>
+      <label>新增新朋友</label>
+      <div id="newfList"></div>
+      <button type="button" class="addbtn" id="addNf">＋ 新增一位新朋友</button>
+    </div>
+
+    <div class="card">
+      <p class="step">步驟 4 · 今天的服事（選填）</p>
+      <div id="serving"></div>
+    </div>
+
+    <div class="card">
+      <p class="step">步驟 5 · 小組回饋與代禱</p>
+      <label>本週小組回饋</label>
+      <textarea id="feedback" rows="3" placeholder="今天小組的狀況、看見的成長或瓶頸…"></textarea>
+      <label style="margin-top:10px">代禱事項</label>
+      <textarea id="prayer" rows="2" placeholder="需要被記念的事…"></textarea>
+    </div>
+
+    <button class="submit" id="submit">送出本週回報</button>
+    <p class="muted" style="text-align:center;margin-top:8px">送出後會寫進出席記錄表、每週小組填報、訪客追蹤表、代禱事項</p>
+  </div>
+
+  <div id="loading" class="hide"><div class="spin">讀取名單中…</div></div>
+  <div id="done"></div>
+
+</div>
+
+<script>
+  var state = { district: '', group: '', groups: {}, members: [] };
+  var newSeq = 0;
+  var SERVE_ROLES = ['破冰', '敬拜', '信息分享'];
+  var REASONS = ['請假', '生病', '外地'];
+  // ★ 後端 API：你的 Apps Script /exec（加了 doPost 後重新部署，網址不變）
+  var API_URL = 'https://script.google.com/macros/s/AKfycbyulURsQVy08gosAm0ENBxQkH1Swt-PBqioklQiP4mw10nZQcuBJgeVHLCzbysh8btSCw/exec';
+  // 本機 file:// 預覽用假資料；正式（http/https，含 GitHub Pages）一律走 API
+  var DEMO = (location.protocol === 'file:');
+
+  // 用 fetch 打 Apps Script。body 是字串 → 預設 text/plain，
+  // 屬「簡單請求」不會觸發 CORS preflight，所以跨網域也通。
+  function api(action, payload) {
+    return fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: action, payload: payload || null })
+    }).then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res && res.error) throw new Error(res.error);
+        return res.data;
+      });
+  }
+
+  var DEMO_GROUPS = {
+    '國中': ['磐石', '旭光', '真光', '大衛一', '大衛二'],
+    '高中': ['米迦勒', '新活寶', '新活力', '大夢想', '新人氣'],
+    '大專': ['新世代', '新生命', '新眼光大專', '提摩太大專', '但以理大專', '新希望大專'],
+    '社青': ['新希望社青', '提摩太社青', '微光社青', '新眼光社青', 'LOVE', '喜悅', 'ONE WAY', '旌旗', 'GOOD DAY']
+  };
+
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  (function initDate() {
+    var d = new Date();
+    document.getElementById('mdate').value = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    document.getElementById('today').textContent = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
+  })();
+
+  if (DEMO) {
+    state.groups = DEMO_GROUPS;
+  } else {
+    api('getGroups')
+      .then(function (g) { state.groups = g || {}; })
+      .catch(function (e) { alert('讀取小組清單失敗：' + e.message); });
+  }
+
+  document.querySelectorAll('#distseg button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('#distseg button').forEach(function (x) { x.classList.remove('sel'); });
+      b.classList.add('sel');
+      state.district = b.dataset.d;
+      var sel = document.getElementById('groupsel');
+      sel.innerHTML = '<option value="">— 選小組 —</option>';
+      (state.groups[state.district] || []).forEach(function (g) {
+        var o = document.createElement('option'); o.value = g; o.textContent = g; sel.appendChild(o);
+      });
+      document.getElementById('rosterArea').classList.add('hide');
+    });
+  });
+
+  document.getElementById('groupsel').addEventListener('change', function (e) {
+    state.group = e.target.value;
+    if (state.group) loadRoster();
+    else document.getElementById('rosterArea').classList.add('hide');
+  });
+  document.getElementById('remoteChk').addEventListener('change', function () {
+    if (state.group) loadRoster();
+  });
+
+  function loadRoster() {
+    document.getElementById('rosterArea').classList.add('hide');
+    document.getElementById('loading').classList.remove('hide');
+    var inclRemote = document.getElementById('remoteChk').checked;
+    if (DEMO) {
+      var demo = []; for (var i = 1; i <= 8; i++) demo.push({ id: 'D' + i, name: '示範組員' + i, remote: false });
+      setTimeout(function () { renderRoster(demo, []); }, 150);
+    } else {
+      Promise.all([
+        api('getRoster', { district: state.district, group: state.group, includeRemote: inclRemote }),
+        api('getVisitors', { group: state.group })
+      ]).then(function (arr) { renderRoster(arr[0] || [], arr[1] || []); })
+        .catch(function (e) {
+          document.getElementById('loading').classList.add('hide');
+          alert('讀取名單失敗：' + e.message);
+        });
+    }
+  }
+
+  function renderRoster(list, visitors) {
+    document.getElementById('loading').classList.add('hide');
+    state.members = list || [];
+    var html = '';
+    state.members.forEach(function (m, i) {
+      var ropts = '<option value="">不明</option>';
+      REASONS.forEach(function (r) { ropts += '<option>' + r + '</option>'; });
+      html += '<div class="mrow" data-i="' + i + '">'
+        + '<div class="who"><span class="nm">' + m.name + '</span>'
+        + (m.remote ? '<span class="tag">外地</span>' : '')
+        + '<div class="reason-row hide" data-k="cong"><span>崇拜沒來</span><select class="reason">' + ropts + '</select></div>'
+        + '<div class="reason-row hide" data-k="grp"><span>小組沒來</span><select class="reason">' + ropts + '</select></div>'
+        + '</div>'
+        + '<button class="tog on" data-k="cong">崇拜</button>'
+        + '<button class="tog on" data-k="grp">小組</button></div>';
+    });
+    document.getElementById('roster').innerHTML = html || '<p class="muted">這組目前沒有在籍名單</p>';
+
+    var ret = (visitors || []).map(function (v) {
+      return '<label class="chk"><input type="checkbox" value="' + v.id + '"> ' + v.name + '（回訪）</label>';
+    }).join('');
+    document.getElementById('returning').innerHTML = ret;
+    document.getElementById('returningArea').classList.toggle('hide', !ret);
+
+    var sv = '';
+    SERVE_ROLES.forEach(function (r) {
+      var opts = '<option value="">—</option>';
+      state.members.forEach(function (m) { opts += '<option>' + m.name + '</option>'; });
+      sv += '<div class="srow"><span>' + r + '</span><select data-role="' + r + '">' + opts + '</select></div>';
+    });
+    document.getElementById('serving').innerHTML = sv;
+
+    var mnt = state.members.map(function (m) {
+      return '<div class="mnt-row" data-id="' + m.id + '" data-orig="' + (m.remote ? '1' : '0') + '">'
+        + '<span class="nm">' + m.name + '</span>'
+        + '<button type="button" class="mtog remote' + (m.remote ? ' on' : '') + '">外地生</button>'
+        + '<button type="button" class="mtog leave">標記離開</button></div>';
+    }).join('');
+    document.getElementById('maintList').innerHTML = mnt || '<p class="muted">這組目前沒有在籍名單</p>';
+    document.querySelectorAll('#maintList .mtog').forEach(function (b) {
+      b.addEventListener('click', function () { b.classList.toggle('on'); });
+    });
+
+    document.querySelectorAll('#roster .tog').forEach(function (b) {
+      b.addEventListener('click', function () {
+        setTog(b, !b.classList.contains('on'));
+        updateCounts();
+      });
+    });
+    updateCounts();
+    document.getElementById('rosterArea').classList.remove('hide');
+  }
+
+  function setTog(b, on) {
+    if (on) b.classList.add('on'); else b.classList.remove('on');
+    var rr = b.closest('.mrow').querySelector('.reason-row[data-k="' + b.dataset.k + '"]');
+    if (on) { rr.classList.add('hide'); rr.querySelector('.reason').value = ''; }
+    else { rr.classList.remove('hide'); }
+  }
+
+  document.getElementById('allIn').addEventListener('click', function () {
+    document.querySelectorAll('#roster .tog').forEach(function (b) { setTog(b, true); });
+    updateCounts();
+  });
+  document.getElementById('allOut').addEventListener('click', function () {
+    document.querySelectorAll('#roster .tog').forEach(function (b) { setTog(b, false); });
+    updateCounts();
+  });
+
+  function updateCounts() {
+    var tot = document.querySelectorAll('#roster .mrow').length;
+    document.getElementById('congN').textContent = document.querySelectorAll('#roster .tog[data-k="cong"].on').length;
+    document.getElementById('grpN').textContent = document.querySelectorAll('#roster .tog[data-k="grp"].on').length;
+    document.getElementById('totN').textContent = tot;
+    document.getElementById('totN2').textContent = tot;
+  }
+
+  function addNfRow() {
+    var div = document.createElement('div');
+    div.className = 'nf';
+    div.innerHTML = '<input class="nf-name" type="text" placeholder="姓名">'
+      + '<input class="nf-contact" type="text" placeholder="聯絡方式（電話 / IG）">'
+      + '<input class="nf-inviter" type="text" placeholder="誰邀請來的">'
+      + '<input class="nf-note" type="text" placeholder="今天參與狀況／印象（選填）">';
+    document.getElementById('newfList').appendChild(div);
+  }
+  document.getElementById('addNf').addEventListener('click', addNfRow);
+
+  function newRosterRowHtml() {
+    var ropts = '<option value="">不明</option>';
+    REASONS.forEach(function (r) { ropts += '<option>' + r + '</option>'; });
+    return '<div class="mrow" data-new="1">'
+      + '<div class="who"><input class="new-name" type="text" placeholder="新組員姓名">'
+      + '<input class="new-contact" type="text" placeholder="聯絡方式（選填）" style="margin-top:4px">'
+      + '<div class="reason-row hide" data-k="cong"><span>崇拜沒來</span><select class="reason">' + ropts + '</select></div>'
+      + '<div class="reason-row hide" data-k="grp"><span>小組沒來</span><select class="reason">' + ropts + '</select></div>'
+      + '</div>'
+      + '<button class="tog on" data-k="cong">崇拜</button>'
+      + '<button class="tog on" data-k="grp">小組</button>'
+      + '<button type="button" class="rm" aria-label="刪除這列">✕</button></div>';
+  }
+
+  document.getElementById('maintToggle').addEventListener('click', function () {
+    var body = document.getElementById('maintBody');
+    var hidden = body.classList.toggle('hide');
+    document.getElementById('maintHint').textContent = hidden ? '展開' : '收合';
+  });
+  document.getElementById('addMember').addEventListener('click', function () {
+    var wrap = document.createElement('div');
+    wrap.innerHTML = newRosterRowHtml();
+    var row = wrap.firstChild;
+    document.getElementById('roster').appendChild(row);
+    row.querySelectorAll('.tog').forEach(function (b) {
+      b.addEventListener('click', function () { setTog(b, !b.classList.contains('on')); updateCounts(); });
+    });
+    var rm = row.querySelector('.rm');
+    if (rm) rm.addEventListener('click', function () { row.remove(); updateCounts(); });
+    updateCounts();
+    var inp = row.querySelector('.new-name'); if (inp) inp.focus();
+  });
+
+  document.getElementById('submit').addEventListener('click', function () {
+    if (!state.group) { alert('請先選小組'); return; }
+    var leader = document.getElementById('leader').value.trim();
+    if (!leader) { alert('請填「填報者」你的名字'); return; }
+
+    var members = [].slice.call(document.querySelectorAll('#roster .mrow')).map(function (r) {
+      var isNew = r.dataset.new === '1';
+      var id, name;
+      if (isNew) { name = (r.querySelector('.new-name').value || '').trim(); id = 'NEW' + (newSeq++); }
+      else { var i = r.dataset.i; id = state.members[i].id; name = state.members[i].name; }
+      var contact = isNew ? (r.querySelector('.new-contact').value || '').trim() : '';
+      return {
+        id: id, name: name, isNew: isNew, contact: contact,
+        cong: r.querySelector('.tog[data-k="cong"]').classList.contains('on'),
+        grp: r.querySelector('.tog[data-k="grp"]').classList.contains('on'),
+        congReason: r.querySelector('.reason-row[data-k="cong"] .reason').value,
+        grpReason: r.querySelector('.reason-row[data-k="grp"] .reason').value
+      };
+    }).filter(function (m) { return !m.isNew || m.name; });
+    var serving = [].slice.call(document.querySelectorAll('#serving select')).map(function (s) {
+      return { role: s.dataset.role, name: s.value };
+    }).filter(function (s) { return s.name; });
+    var returningVisitors = [].slice.call(document.querySelectorAll('#returning input:checked')).map(function (c) { return c.value; });
+    var newFriends = [].slice.call(document.querySelectorAll('.nf')).map(function (n) {
+      return {
+        name: n.querySelector('.nf-name').value,
+        contact: n.querySelector('.nf-contact').value,
+        inviter: n.querySelector('.nf-inviter').value,
+        note: n.querySelector('.nf-note').value
+      };
+    }).filter(function (n) { return n.name.trim(); });
+
+    var rosterChanges = [].slice.call(document.querySelectorAll('#maintList .mnt-row')).map(function (r) {
+      return {
+        id: r.dataset.id,
+        remote: r.querySelector('.mtog.remote').classList.contains('on'),
+        leaving: r.querySelector('.mtog.leave').classList.contains('on'),
+        orig: r.dataset.orig === '1'
+      };
+    }).filter(function (c) { return c.leaving || c.remote !== c.orig; })
+      .map(function (c) { return { id: c.id, remote: c.remote, leaving: c.leaving }; });
+
+    var payload = {
+      district: state.district, group: state.group,
+      date: document.getElementById('mdate').value, leader: leader,
+      members: members, serving: serving,
+      returningVisitors: returningVisitors, newFriends: newFriends,
+      rosterChanges: rosterChanges,
+      feedback: document.getElementById('feedback').value,
+      prayer: document.getElementById('prayer').value
+    };
+
+    var btn = this; btn.disabled = true; btn.textContent = '送出中…';
+    if (DEMO) {
+      var grp = members.filter(function (m) { return m.grp; });
+      setTimeout(function () {
+        showDone({
+          present: grp.length, total: members.length,
+          rate: members.length ? Math.round(grp.length / members.length * 100) : 0,
+          absent: members.filter(function (m) { return !m.grp; }).map(function (m) { return m.name; }),
+          newFriends: newFriends.length + returningVisitors.length
+        });
+      }, 250);
+    } else {
+      api('submitReport', payload)
+        .then(function (res) { showDone(res); })
+        .catch(function (err) { btn.disabled = false; btn.textContent = '送出本週回報'; alert('送出失敗：' + err.message); });
+    }
+  });
+
+  function showDone(res) {
+    document.getElementById('rosterArea').classList.add('hide');
+    var html = '<div class="card ok"><h1>✓ 已送出</h1>'
+      + '<p class="sub">' + state.district + ' · ' + state.group + '　小組出席 ' + res.present + '/' + res.total + '（' + res.rate + '%）</p>'
+      + (res.absent.length ? '<p class="sub" style="color:#b3261e">缺席：' + res.absent.join('、') + '</p>' : '')
+      + (res.newFriends ? '<p class="sub">新朋友 ' + res.newFriends + ' 位已記錄</p>' : '')
+      + '<button class="submit" style="margin-top:12px" onclick="location.reload()">再填下一組</button></div>';
+    document.getElementById('done').innerHTML = html;
+    window.scrollTo(0, 0);
+  }
+</script>
+</body>
+</html>

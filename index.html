@@ -41,6 +41,11 @@
   .tog.on { background: #fbeed3; color: #b5651d; border-color: transparent; }
   .srow { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
   .srow span { width: 56px; font-size: 14px; color: #444; }
+  .srole { margin-bottom: 12px; }
+  .srole-label { font-size: 14px; color: #444; margin-bottom: 6px; }
+  .sps { display: flex; flex-direction: column; gap: 6px; }
+  .saddp { margin-top: 6px; font-size: 13px; padding: 6px 11px; border: 0.5px dashed #cfcfca;
+    border-radius: 8px; background: #fff; color: #444; cursor: pointer; }
   .chk { display: flex; align-items: center; gap: 8px; font-size: 15px;
     padding: 7px 0; }
   .chk input { width: 18px; height: 18px; }
@@ -161,8 +166,8 @@
 <script>
   var state = { district: '', group: '', groups: {}, members: [] };
   var newSeq = 0;
-  var SERVE_ROLES = ['破冰', '敬拜', '信息分享'];
-  var REASONS = ['請假', '生病', '外地'];
+  var SERVE_ROLES = ['破冰', '敬拜', '信息分享', '報告與異象分享', '結束的禱告'];
+  var REASONS = ['請假', '生病', '補習'];
   // ★ 後端 API：你的 Apps Script /exec（加了 doPost 後重新部署，網址不變）
   var API_URL = 'https://script.google.com/macros/s/AKfycbyulURsQVy08gosAm0ENBxQkH1Swt-PBqioklQiP4mw10nZQcuBJgeVHLCzbysh8btSCw/exec';
   // 本機 file:// 預覽用假資料；正式（http/https，含 GitHub Pages）一律走 API
@@ -245,6 +250,12 @@
     }
   }
 
+  function servingOpts() {
+    var opts = '<option value="">—</option>';
+    state.members.forEach(function (m) { opts += '<option>' + m.name + '</option>'; });
+    return opts;
+  }
+
   function renderRoster(list, visitors) {
     document.getElementById('loading').classList.add('hide');
     state.members = list || [];
@@ -271,11 +282,20 @@
 
     var sv = '';
     SERVE_ROLES.forEach(function (r) {
-      var opts = '<option value="">—</option>';
-      state.members.forEach(function (m) { opts += '<option>' + m.name + '</option>'; });
-      sv += '<div class="srow"><span>' + r + '</span><select data-role="' + r + '">' + opts + '</select></div>';
+      sv += '<div class="srole"><div class="srole-label">' + r + '</div>'
+        + '<div class="sps"><select data-role="' + r + '">' + servingOpts() + '</select></div>'
+        + '<button type="button" class="saddp" data-role="' + r + '">＋ 加一人</button></div>';
     });
     document.getElementById('serving').innerHTML = sv;
+    document.querySelectorAll('#serving .saddp').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var sps = b.closest('.srole').querySelector('.sps');
+        var sel = document.createElement('select');
+        sel.setAttribute('data-role', b.dataset.role);
+        sel.innerHTML = servingOpts();
+        sps.appendChild(sel);
+      });
+    });
 
     var mnt = state.members.map(function (m) {
       return '<div class="mnt-row" data-id="' + m.id + '" data-orig="' + (m.remote ? '1' : '0') + '">'

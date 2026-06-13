@@ -450,9 +450,23 @@
         });
       }, 250);
     } else {
-      api('submitReport', payload)
-        .then(function (res) { showDone(res); })
-        .catch(function (err) { btn.disabled = false; btn.textContent = '送出本週回報'; alert('送出失敗：' + err.message); });
+      var doSubmit = function () {
+        api('submitReport', payload)
+          .then(function (res) {
+            if (res && res.duplicate) {
+              var who = res.by ? ('（先前由 ' + res.by + ' 回報）') : '';
+              if (confirm('這一組今天已經回報過了' + who + '。\n要再送一次嗎？系統會以最新這次為準。')) {
+                payload.force = true; btn.disabled = true; btn.textContent = '送出中…'; doSubmit();
+              } else {
+                btn.disabled = false; btn.textContent = '送出本週回報';
+              }
+              return;
+            }
+            showDone(res);
+          })
+          .catch(function (err) { btn.disabled = false; btn.textContent = '送出本週回報'; alert('送出失敗：' + err.message); });
+      };
+      doSubmit();
     }
   });
 

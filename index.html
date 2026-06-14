@@ -196,7 +196,8 @@
   function pad(n) { return (n < 10 ? '0' : '') + n; }
   (function initDate() {
     var d = new Date();
-    document.getElementById('mdate').value = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    var sat = new Date(d); sat.setDate(d.getDate() - ((d.getDay() + 1) % 7));  // 最近的週六
+    document.getElementById('mdate').value = sat.getFullYear() + '-' + pad(sat.getMonth() + 1) + '-' + pad(sat.getDate());
     document.getElementById('today').textContent = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
   })();
 

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我的小組牧養儀表板</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
+    margin: 0; background: #e9ebef; color: #1f2328; font-size: 14px; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 16px; }
+  .head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .head h1 { font-size: 19px; font-weight: 500; margin: 0; flex: 1; }
+  .head select { font-size: 13px; color: #b5651d; background: #fbeed3; border: none;
+    border-radius: 8px; padding: 5px 8px; font-family: inherit; cursor: pointer; }
+  .note { font-size: 12px; color: #9a9a96; margin: 0 0 16px; }
+  .g2 { display: flex; gap: 10px; margin-bottom: 12px; }
+  .gstat { flex: 1; background: #fff; border-radius: 12px; padding: 12px 14px; }
+  .gstat .lab { font-size: 12px; color: #6b6b6b; }
+  .gstat .num { font-size: 26px; font-weight: 500; color: #E8852C; }
+  .gstat .num small { font-size: 13px; color: #9a9a96; }
+  .card { background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+  .sec { font-size: 14px; font-weight: 500; margin: 0 0 8px; }
+  .tleg { display: flex; gap: 14px; font-size: 12px; font-weight: normal; }
+  .tleg span { display: flex; align-items: center; gap: 4px; }
+  .dot { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+  .mtab { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .mtab td { padding: 7px 4px; border-bottom: 0.5px solid #eee; }
+  .mtab tr:last-child td { border-bottom: none; }
+  .mtab td.stc { text-align: right; white-space: nowrap; }
+  .st { display: inline-block; font-size: 12px; border-radius: 6px; padding: 2px 8px; white-space: nowrap; }
+  .st.ok2 { background: #e6f3ea; color: #1f7a3d; }
+  .st.amber { background: #fbeed3; color: #8a5a00; }
+  .st.red { background: #fbe3e0; color: #b3261e; }
+  .st.gray { background: #eee; color: #8a8a86; }
+  .gline { font-size: 13px; line-height: 1.9; }
+  .gline .lb { color: #6b6b6b; }
+  /* 傳道的回應 */
+  .msg { border-left: 3px solid #185FA5; padding: 8px 12px; margin-bottom: 8px; background: #f6f9fd; border-radius: 0 8px 8px 0; }
+  .msg .txt { font-size: 14px; line-height: 1.6; }
+  .msg .meta { color: #9a9a96; font-size: 12px; margin-top: 3px; }
+  .msg .tag { display: inline-block; font-size: 11px; border-radius: 5px; padding: 1px 6px; margin-right: 5px;
+    background: #eef4fb; color: #185FA5; vertical-align: 1px; }
+  /* 私訊：機密、視覺獨立 */
+  .msg.dm { border-left-color: #b5651d; background: #fdf6ec; }
+  .msg.dm .tag { background: #fbeed3; color: #8a5a00; }
+  .dmhint { font-size: 11px; color: #b5651d; margin: 0 0 8px; }
+  /* 跟進狀況 */
+  .care { display: flex; align-items: center; gap: 6px; font-size: 13px; line-height: 2; }
+  .care .who { background: #e6f3ea; color: #1f7a3d; border-radius: 6px; padding: 1px 8px; font-size: 12px; }
+  .fbhist { border: 0.5px solid #e3e3e0; border-radius: 8px; padding: 9px 12px; margin-bottom: 6px; }
+  .fbhist .wk { font-size: 12px; color: #9a9a96; margin-bottom: 2px; }
+  .fbhist .fbt { font-size: 14px; line-height: 1.6; }
+  .fbhist .prt { font-size: 13px; color: #6b6b6b; margin-top: 4px; }
+  .center { text-align: center; color: #9a9a96; padding: 48px 16px; font-size: 15px; line-height: 1.8; }
+  .demo { background: #fff3cd; color: #8a5a00; text-align: center; font-size: 12px; padding: 6px; }
+  /* 連續缺席提醒 */
+  .warn3 { background: #fdf2f1; border: 1px solid #f0c4bd; border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; }
+  /* 月檢視出席表 */
+  .motab { border-collapse: collapse; font-size: 13px; width: 100%; }
+  .motab td { padding: 6px 4px; border-bottom: 0.5px solid #eee; text-align: center; white-space: nowrap; }
+  .motab tr:last-child td { border-bottom: none; }
+  .motab td.nm { text-align: left; }
+  .motab td.wh2 { font-size: 11px; color: #9a9a96; }
+  .mk { display: inline-block; min-width: 13px; font-weight: 500; font-size: 13px; }
+  .mk.ok { color: #1f7a3d; } .mk.bad { color: #b3261e; }
+  .mk.mid { color: #8a5a00; } .mk.non { color: #b0b0aa; }
+  .sep { color: #d8d8d4; margin: 0 1px; }
+  #mosel { font-size: 13px; color: #b5651d; background: #fbeed3; border: none;
+    border-radius: 8px; padding: 4px 8px; font-family: inherit; cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="demobar" class="demo" style="display:none">DEMO 預覽模式（假資料）· 正式使用請走傳道發給你的專屬連結</div>
+<div class="wrap">
+  <div id="loading" class="center">讀取中…</div>
+  <div id="app" style="display:none"></div>
+</div>
+
+<script>
+  var API_URL = 'https://script.google.com/macros/s/AKfycbzvOJKph1-Ru8bsC2u1o8EpNQ4zLHMnoqsuotintTQDM4KTR2cK5zjoaGfGSzBRcLOBqQ/exec';
+  var Q = new URLSearchParams(location.search);
+  var GROUP = Q.get('g') || '';
+  var KEY = Q.get('k') || '';
+  var DEMO = Q.get('demo') === '1' || (!GROUP && !KEY && location.protocol === 'file:');
+
+  function api(action, payload) {
+    return fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, payload: payload || null }) })
+      .then(function (r) { return r.json(); })
+      .then(function (res) { if (res && res.error) throw new Error(res.error); return res.data; });
+  }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+  function weekLabel(w, latest) { return w + (w === latest ? '（最新）' : ''); }
+
+  // 跨週折線（與傳道端同款）
+  function lineChart(rows, series) {
+    var data = (rows || []).slice(-12);
+    if (data.length < 2) return '<p class="center" style="padding:14px 0">資料滿兩週後會出現趨勢線（目前 ' + data.length + ' 週）</p>';
+    var W = 600, H = 180, padL = 20, padR = 20, padT = 22, padB = 26;
+    var maxY = 1;
+    series.forEach(function (sr) { data.forEach(function (r) { maxY = Math.max(maxY, r[sr.key] || 0); }); });
+    var iw = (W - padL - padR) / (data.length - 1);
+    function X(i) { return padL + i * iw; }
+    function Y(v) { return padT + (H - padT - padB) * (1 - v / maxY); }
+    var s = '';
+    data.forEach(function (r, i) {
+      var lab = r.week.slice(5).replace('-', '/');
+      s += '<text x="' + X(i).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="#9a9a96">' + lab + '</text>';
+      s += '<line x1="' + X(i).toFixed(1) + '" y1="' + padT + '" x2="' + X(i).toFixed(1) + '" y2="' + (H - padB) + '" stroke="#f0f0ee" stroke-width="1"/>';
+    });
+    series.forEach(function (sr) {
+      var pts = data.map(function (r, i) { return X(i).toFixed(1) + ',' + Y(r[sr.key] || 0).toFixed(1); }).join(' ');
+      s += '<polyline points="' + pts + '" fill="none" stroke="' + sr.color + '" stroke-width="2"/>';
+      data.forEach(function (r, i) {
+        var v = r[sr.key] || 0;
+        s += '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(v).toFixed(1) + '" r="3" fill="' + sr.color + '"/>'
+          + '<text x="' + X(i).toFixed(1) + '" y="' + (Y(v) - 7).toFixed(1) + '" text-anchor="middle" font-size="10" fill="' + sr.color + '">' + v + '</text>';
+      });
+    });
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block">' + s + '</svg>';
+  }
+
+  function chip(st) {
+    if (!st) return '<span class="st gray">—</span>';
+    var t = st.status, note = st.note || '';
+    if (t === '出席') return '<span class="st ok2">✓ 出席</span>';
+    if (t === '請假') return '<span class="st amber">' + (note.indexOf('生病') >= 0 ? '生病' : '請假') + '</span>';
+    if (t === '補習') return '<span class="st amber">補習</span>';
+    if (t === '外地') return '<span class="st gray">外地</span>';
+    return '<span class="st red">不明缺席</span>';
+  }
+
+  function load(week) {
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('app').style.display = 'none';
+    if (DEMO) { setTimeout(function () { render(demoData(week)); }, 150); return; }
+    api('leaderReport', { group: GROUP, key: KEY, week: week || '' })
+      .then(render)
+      .catch(function (e) {
+        document.getElementById('loading').innerHTML = '讀取失敗：' + esc(e.message);
+      });
+  }
+
+  function render(d) {
+    var load_ = document.getElementById('loading'), app = document.getElementById('app');
+    if (!d || d.denied) {
+      load_.innerHTML = '🔒 這個連結無效或已失效。<br>請向你的區牧／傳道索取最新的專屬連結。';
+      return;
+    }
+    load_.style.display = 'none'; app.style.display = 'block';
+
+    var latest = (d.weeks && d.weeks[0]) || '';
+    var opts = (d.weeks || []).map(function (w) {
+      return '<option value="' + w + '"' + (w === d.week ? ' selected' : '') + '>' + weekLabel(w, latest) + '</option>';
+    }).join('');
+    var h = '';
+    h += '<div class="head"><h1>' + esc(d.group || GROUP) + ' · 牧養儀表板</h1>'
+      + ((d.weeks && d.weeks.length) ? '<select id="wksel">' + opts + '</select>' : '') + '</div>';
+    h += '<p class="note">只有你（本組組長）看得到這頁。傳道的私訊與跟進僅顯示在此，請勿轉傳連結或截圖公開。</p>';
+
+    // ⚠️ 連續缺席提醒（連續 3 週以上未出席小組）
+    if ((d.alerts || []).length) {
+      h += '<div class="warn3"><div class="sec" style="color:#b3261e;margin-bottom:6px">⚠️ 需要特別留意</div>';
+      d.alerts.forEach(function (a) {
+        var rs = []; (a.reasons || []).forEach(function (r) { if (rs.indexOf(r) < 0) rs.push(r); });
+        h += '<div class="gline"><b>' + esc(a.name) + '</b> 已連續 ' + a.weeks + ' 週沒有出席小組'
+          + (rs.length ? '<span class="lb">（原因：' + esc(rs.join('、')) + '）</span>' : '') + '</div>';
+      });
+      h += '<p class="note" style="margin:6px 0 0">建議這週主動聯繫關心。若其實有請假，點名時選對原因就不會誤判。</p></div>';
+    }
+
+    var members = d.members || [];
+    if (members.length) {
+      var congIn = 0, grpIn = 0;
+      members.forEach(function (m) {
+        if (m.cong && m.cong.status === '出席') congIn++;
+        if (m.grp && m.grp.status === '出席') grpIn++;
+      });
+      var tot = members.length;
+      h += '<div class="g2">'
+        + '<div class="gstat"><div class="lab">崇拜出席</div><div class="num">' + congIn + '<small>/' + tot + '</small></div></div>'
+        + '<div class="gstat"><div class="lab">小組出席</div><div class="num">' + grpIn + '<small>/' + tot + '</small></div></div></div>';
+    }
+
+    // ① 人數變化
+    h += '<div class="card"><div class="sec" style="display:flex;justify-content:space-between"><span>① 過去人數變化</span>'
+      + '<span class="tleg"><span><span class="dot" style="background:#E8852C"></span>崇拜</span>'
+      + '<span><span class="dot" style="background:#378ADD"></span>小組</span></span></div>'
+      + lineChart(d.trend, [{ key: 'cong', color: '#E8852C' }, { key: 'grp', color: '#378ADD' }]) + '</div>';
+
+    // ② 逐人出席（月檢視：當月每一週一欄）
+    var mx = d.attMatrix || { weeks: [], members: [] };
+    var cm = '';
+    if (mx.weeks.length) {
+      var months = [], mseen = {};
+      mx.weeks.forEach(function (w) { var m = w.slice(0, 7); if (!mseen[m]) { mseen[m] = true; months.push(m); } });
+      months.sort().reverse();
+      cm = (d.week || '').slice(0, 7);
+      if (months.indexOf(cm) < 0) cm = months[0];
+      var mopts = months.map(function (m) {
+        return '<option value="' + m + '"' + (m === cm ? ' selected' : '') + '>' + m.slice(0, 4) + ' 年 ' + Number(m.slice(5)) + ' 月</option>';
+      }).join('');
+      h += '<div class="card"><div class="sec" style="display:flex;justify-content:space-between;align-items:center"><span>② 逐人出席（當月）</span><select id="mosel">' + mopts + '</select></div>'
+        + '<div id="mogrid" style="overflow-x:auto"></div>'
+        + '<p class="note" style="margin:8px 0 0">每格＝崇拜／小組：<span class="mk ok">✓</span> 出席　<span class="mk bad">✕</span> 不明缺席　<span class="mk mid">假 病 補</span> 有原因　<span class="mk non">—</span> 無記錄</p></div>';
+    }
+    if ((d.serving || []).length) {
+      h += '<div class="card"><div class="sec">當週服事</div><div class="gline">'
+        + d.serving.map(function (s) { return '<span class="lb">' + esc(s.role) + '：</span>' + esc(s.name); }).join('　·　')
+        + '</div></div>';
+    }
+
+    // ③ 我填的回饋歷史
+    h += '<div class="card"><div class="sec">③ 我填的回饋整理</div>';
+    var fh = d.feedbackHistory || [];
+    if (fh.length) {
+      fh.forEach(function (f) {
+        h += '<div class="fbhist"><div class="wk">' + esc(f.week) + ' 那週</div>'
+          + (f.feedback ? '<div class="fbt">' + esc(f.feedback) + '</div>' : '')
+          + (f.prayer ? '<div class="prt">🙏 ' + esc(f.prayer) + '</div>' : '') + '</div>';
+      });
+    } else { h += '<div class="gline lb">還沒有填過回饋。每週點名時可以在最後填「本週回饋」。</div>'; }
+    h += '</div>';
+
+    // ④ 傳道的回應（小組回饋＋🔒私訊＋全體/牧區公告）
+    h += '<div class="card"><div class="sec">④ 傳道的回應</div>';
+    var msgs = d.pastorMsgs || [];
+    if (msgs.length) {
+      if (msgs.some(function (m) { return m.level === '小組私訊'; })) {
+        h += '<p class="dmhint">🔒 標「私訊」的內容只有你看得到，不會出現在公開填報表。</p>';
+      }
+      msgs.forEach(function (m) {
+        var dm = m.level === '小組私訊';
+        var tag = dm ? '🔒 私訊' : (m.level === '小組' ? '給本組' : m.level);
+        h += '<div class="msg' + (dm ? ' dm' : '') + '"><div class="txt"><span class="tag">' + esc(tag) + '</span>' + esc(m.text) + '</div>'
+          + '<div class="meta">' + esc(m.time) + ' · ' + esc(m.by) + '</div></div>';
+      });
+    } else { h += '<div class="gline lb">目前沒有傳道的回應。</div>'; }
+    h += '</div>';
+
+    // ⑤ 組員跟進狀況（只顯示狀態，不含私密內文）
+    var cs = d.careStatus || [];
+    if (cs.length) {
+      h += '<div class="card"><div class="sec">⑤ 傳道正在關心的組員</div>';
+      cs.forEach(function (c) {
+        h += '<div class="care"><span>' + esc(c.name) + '</span><span class="who">關心中 · ' + esc(c.by) + '</span></div>';
+      });
+      h += '<p class="note" style="margin-top:8px">代表傳道已認領、正在個別關心這位組員。你們可以一起同行。</p></div>';
+    }
+
+    // 新朋友（若該週有）
+    if ((d.newFriends || []).length || (d.returning || []).length) {
+      h += '<div class="card"><div class="sec">本週新朋友</div><div class="gline">';
+      (d.newFriends || []).forEach(function (n) {
+        h += '<div>🆕 ' + esc(n.name) + (n.inviter ? '<span class="lb">（' + esc(n.inviter) + ' 邀請）</span>' : '') + '</div>';
+      });
+      (d.returning || []).forEach(function (n) {
+        h += '<div>🔁 ' + esc(n.name) + '<span class="lb">（回訪 · 累積 ' + n.count + ' 次）</span></div>';
+      });
+      h += '</div></div>';
+    }
+
+    app.innerHTML = h;
+    var sel = document.getElementById('wksel');
+    if (sel) sel.addEventListener('change', function () { load(this.value); });
+    if (mx.weeks.length) {
+      renderMonthGrid(mx, cm);
+      document.getElementById('mosel').addEventListener('change', function () { renderMonthGrid(mx, this.value); });
+    }
+  }
+
+  // ── 月檢視出席表 ──
+  function mark(st) {
+    if (!st) return '<span class="mk non">—</span>';
+    var t = st.status;
+    if (t === '出席') return '<span class="mk ok">✓</span>';
+    if (t === '請假') return '<span class="mk mid">' + ((st.note || '').indexOf('生病') >= 0 ? '病' : '假') + '</span>';
+    if (t === '補習') return '<span class="mk mid">補</span>';
+    if (t === '外地') return '<span class="mk non">外</span>';
+    return '<span class="mk bad">✕</span>';
+  }
+  function renderMonthGrid(mx, month) {
+    var ws = mx.weeks.filter(function (w) { return w.slice(0, 7) === month; });
+    var h = '<table class="motab"><tr><td></td>';
+    ws.forEach(function (w) { h += '<td class="wh2">' + w.slice(5).replace('-', '/') + ' 週</td>'; });
+    h += '</tr>';
+    (mx.members || []).forEach(function (m) {
+      h += '<tr><td class="nm">' + esc(m.name) + '</td>';
+      ws.forEach(function (w) {
+        var c = (m.weeks || {})[w] || {};
+        h += '<td class="ce">' + mark(c.cong) + '<span class="sep">/</span>' + mark(c.grp) + '</td>';
+      });
+      h += '</tr>';
+    });
+    h += '</table>';
+    document.getElementById('mogrid').innerHTML = h;
+  }
+
+  // ── DEMO 假資料 ──
+  function demoData(week) {
+    document.getElementById('demobar').style.display = 'block';
+    var weeks = ['2026-07-07', '2026-06-30', '2026-06-23'];
+    var wk = (week && weeks.indexOf(week) >= 0) ? week : weeks[0];
+    return {
+      denied: false, region: '高中', group: '高中A', week: wk, weeks: weeks,
+      leader: '透透', time: '2026-07-07 21:12',
+      members: [
+        { name: '小明', cong: { status: '出席' }, grp: { status: '出席' } },
+        { name: '小華', cong: { status: '出席' }, grp: { status: '缺席' } },
+        { name: '阿強', cong: { status: '請假', note: '生病' }, grp: { status: '請假', note: '生病' } },
+        { name: '曉琪', cong: { status: '缺席' }, grp: { status: '缺席' } }
+      ],
+      serving: [{ role: '敬拜', name: '小明' }, { role: '招待', name: '曉琪' }],
+      trend: [
+        { week: '2026-06-23', cong: 6, grp: 5 },
+        { week: '2026-06-30', cong: 7, grp: 6 },
+        { week: '2026-07-07', cong: 8, grp: 6 }
+      ],
+      feedbackHistory: [
+        { week: '2026-07-07', feedback: '這週分享很深，小華願意開口談家裡的事，是突破。', prayer: '為阿強的健康禱告。' },
+        { week: '2026-06-30', feedback: '破冰活動效果好，新朋友願意再來。', prayer: '' }
+      ],
+      pastorMsgs: [
+        { time: '07/08', by: '子甯', week: '2026-07-07', level: '小組私訊', text: '曉琪連兩週沒來，我已經私下聯繫她媽媽，家裡最近有狀況，你先不用追她點名，我來跟。' },
+        { time: '07/08', by: '子甯', week: '2026-07-07', level: '小組', text: '謝謝你們用心接待新朋友，這週的回饋讀到很受激勵！' },
+        { time: '07/05', by: '子甯', week: '', level: '全體', text: '下週六合併聚會，請各組提前 15 分鐘集合。' }
+      ],
+      careStatus: [{ name: '曉琪', by: '子甯' }],
+      newFriends: [{ name: '恩恩', inviter: '小明' }],
+      returning: [],
+      attMatrix: demoMatrix(),
+      alerts: [{ id: 'P4', name: '曉琪', weeks: 3, reasons: ['不明', '不明', '不明'] }]
+    };
+  }
+  function demoMatrix() {
+    var W = ['2026-06-02', '2026-06-09', '2026-06-16', '2026-06-23', '2026-06-30', '2026-07-07'];
+    function A() { return { cong: { status: '出席' }, grp: { status: '出席' } }; }
+    function X() { return { cong: { status: '缺席' }, grp: { status: '缺席' } }; }
+    function S() { return { cong: { status: '請假', note: '生病' }, grp: { status: '請假', note: '生病' } }; }
+    function GX() { return { cong: { status: '出席' }, grp: { status: '缺席' } }; }
+    function row(id, name, arr) {
+      var ws = {}; W.forEach(function (w, i) { ws[w] = arr[i]; });
+      return { id: id, name: name, weeks: ws };
+    }
+    return { weeks: W, members: [
+      row('P1', '小明', [A(), A(), A(), A(), A(), A()]),
+      row('P2', '小華', [A(), GX(), A(), A(), GX(), GX()]),
+      row('P3', '阿強', [A(), A(), A(), A(), S(), S()]),
+      row('P4', '曉琪', [A(), A(), A(), X(), X(), X()])
+    ] };
+  }
+
+  load('');
+</script>
+</body>
+</html>

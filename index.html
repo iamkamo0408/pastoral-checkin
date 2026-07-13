@@ -33,9 +33,12 @@
   .nm { font-size: 15px; }
   .tag { font-size: 11px; color: #8a5a00; background: #fbeed3; border-radius: 5px;
     padding: 1px 6px; margin-left: 6px; }
-  .reason-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+  .reason-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
   .reason-row > span { font-size: 12px; color: #8a8a86; white-space: nowrap; }
-  .reason-row .reason { max-width: 140px; font-size: 13px; padding: 5px 8px; }
+  .rbtns { display: inline-flex; gap: 5px; flex-wrap: wrap; }
+  .rbtn { padding: 5px 11px; font-size: 13px; border: 0.5px solid #cfcfca;
+    border-radius: 999px; background: #fff; color: #6b6b6b; cursor: pointer; }
+  .rbtn.on { background: #fbeed3; color: #b5651d; border-color: transparent; }
   .tog { padding: 7px 11px; border: 0.5px solid #cfcfca; border-radius: 8px;
     font-size: 13px; background: #fff; color: #b0b0aa; cursor: pointer; }
   .tog.on { background: #fbeed3; color: #b5651d; border-color: transparent; }
@@ -78,6 +81,16 @@
   .new-name { margin-bottom: 2px; }
   .rm { border: none; background: none; color: #b0b0aa; font-size: 16px;
     cursor: pointer; padding: 4px 6px; line-height: 1; align-self: center; }
+  /* ── 送出前預覽 ── */
+  #pvpage { position: fixed; inset: 0; background: #e9ebef; overflow-y: auto;
+    z-index: 50; display: none; -webkit-overflow-scrolling: touch; }
+  .pvline { font-size: 14px; line-height: 1.8; }
+  .pvline .lb { color: #6b6b6b; font-size: 13px; }
+  .pvnums { display: flex; gap: 10px; margin-bottom: 8px; }
+  .pvbtns { display: flex; gap: 10px; margin-top: 4px; }
+  .pvback { flex: 1; padding: 13px; font-size: 16px; border: 0.5px solid #cfcfca;
+    border-radius: 10px; background: #fff; color: #444; cursor: pointer; }
+  .pvgo { flex: 2; }
 </style>
 </head>
 <body>
@@ -85,6 +98,11 @@
 
   <div class="card">
     <h1>武昌學青牧區牧養回饋表單</h1><p class="sub" id="today"></p>
+  </div>
+
+  <div id="bulletin" class="card hide" style="border-color:#f3d9a8;background:#fffdf7">
+    <p class="step" style="color:#8a5a00">📢 公告</p>
+    <div id="bulletinList"></div>
   </div>
 
   <div class="card">
@@ -105,6 +123,7 @@
   </div>
 
   <div id="rosterArea" class="hide">
+    <div id="fbArea"></div>
     <div class="card">
       <div style="display:flex;gap:10px">
         <div class="stat"><div class="sub">崇拜出席</div><div class="n"><span id="congN">0</span>/<span id="totN">0</span></div></div>
@@ -163,6 +182,8 @@
 
 </div>
 
+<div id="pvpage"><div class="wrap" id="pvbody"></div></div>
+
 <script>
   var state = { district: '', group: '', groups: {}, members: [] };
   var newSeq = 0;
@@ -207,6 +228,18 @@
     api('getGroups')
       .then(function (g) { state.groups = g || {}; })
       .catch(function (e) { alert('讀取小組清單失敗：' + e.message); });
+    // 公佈欄（全體公告）：一進表單就顯示；後端還沒更新時靜默略過
+    api('getBulletin', {}).then(function (b) { renderGlobalBulletin((b && b.global) || []); }).catch(function () {});
+  }
+
+  function bulLine(prefix, b) {
+    return '<div style="font-size:14px;line-height:1.7;margin-bottom:4px">' + prefix + esc(b.text)
+      + ' <span style="font-size:12px;color:#9a9a96">' + esc(b.time) + ' · ' + esc(b.by) + '傳道</span></div>';
+  }
+  function renderGlobalBulletin(list) {
+    if (!list.length) return;
+    document.getElementById('bulletinList').innerHTML = list.map(function (b) { return bulLine('', b); }).join('');
+    document.getElementById('bulletin').classList.remove('hide');
   }
 
   document.querySelectorAll('#distseg button').forEach(function (b) {
@@ -242,8 +275,9 @@
     } else {
       Promise.all([
         api('getRoster', { district: state.district, group: state.group, includeRemote: inclRemote }),
-        api('getVisitors', { group: state.group })
-      ]).then(function (arr) { renderRoster(arr[0] || [], arr[1] || []); })
+        api('getVisitors', { group: state.group }),
+        api('getBulletin', { district: state.district, group: state.group }).catch(function () { return null; })
+      ]).then(function (arr) { renderRoster(arr[0] || [], arr[1] || [], arr[2]); })
         .catch(function (e) {
           document.getElementById('loading').classList.add('hide');
           alert('讀取名單失敗：' + e.message);
@@ -257,18 +291,25 @@
     return opts;
   }
 
-  function renderRoster(list, visitors) {
+  function renderRoster(list, visitors, bul) {
     document.getElementById('loading').classList.add('hide');
+    // 傳道的話（牧區公告＋這組的回饋）：顯示在點名區最上方
+    var fb = '';
+    if (bul) {
+      (bul.district || []).forEach(function (b) { fb += bulLine('<span class="tag">' + esc(state.district) + '區</span> ', b); });
+      (bul.group || []).forEach(function (b) { fb += bulLine('💬 ', b); });
+    }
+    document.getElementById('fbArea').innerHTML = fb
+      ? '<div class="card" style="border-color:#bcd7f0;background:#f7fbff"><p class="step" style="color:#185FA5">💬 傳道的話 · 給你們組</p>' + fb + '</div>'
+      : '';
     state.members = list || [];
     var html = '';
     state.members.forEach(function (m, i) {
-      var ropts = '<option value="">不明</option>';
-      REASONS.forEach(function (r) { ropts += '<option>' + r + '</option>'; });
       html += '<div class="mrow" data-i="' + i + '">'
         + '<div class="who"><span class="nm">' + m.name + '</span>'
         + (m.remote ? '<span class="tag">外地</span>' : '')
-        + '<div class="reason-row hide" data-k="cong"><span>崇拜沒來</span><select class="reason">' + ropts + '</select></div>'
-        + '<div class="reason-row hide" data-k="grp"><span>小組沒來</span><select class="reason">' + ropts + '</select></div>'
+        + '<div class="reason-row hide" data-k="cong"><span>崇拜沒來</span>' + reasonBtnsHtml() + '</div>'
+        + '<div class="reason-row hide" data-k="grp"><span>小組沒來</span>' + reasonBtnsHtml() + '</div>'
         + '</div>'
         + '<button class="tog on" data-k="cong">崇拜</button>'
         + '<button class="tog on" data-k="grp">小組</button></div>';
@@ -319,10 +360,38 @@
     document.getElementById('rosterArea').classList.remove('hide');
   }
 
+  // 缺席原因：單選藥丸按鈕（取代下拉選單），值存在 .rbtns 的 data-v
+  function reasonBtnsHtml() {
+    var h = '<span class="rbtns" data-v=""><button type="button" class="rbtn on" data-v="">不明</button>';
+    REASONS.forEach(function (r) { h += '<button type="button" class="rbtn" data-v="' + r + '">' + r + '</button>'; });
+    return h + '</span>';
+  }
+  function resetReason(rr) {
+    var box = rr.querySelector('.rbtns');
+    if (!box) return;
+    box.dataset.v = '';
+    [].slice.call(box.querySelectorAll('.rbtn')).forEach(function (x) {
+      x.classList.toggle('on', x.dataset.v === '');
+    });
+  }
+  function reasonOf(row, k) {
+    var box = row.querySelector('.reason-row[data-k="' + k + '"] .rbtns');
+    return box ? (box.dataset.v || '') : '';
+  }
+  // 事件代理：整個名單區共用一個監聽，之後動態新增的列也吃得到
+  document.getElementById('roster').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('.rbtn') : null;
+    if (!b) return;
+    var box = b.parentNode;
+    [].slice.call(box.querySelectorAll('.rbtn')).forEach(function (x) { x.classList.remove('on'); });
+    b.classList.add('on');
+    box.dataset.v = b.dataset.v;
+  });
+
   function setTog(b, on) {
     if (on) b.classList.add('on'); else b.classList.remove('on');
     var rr = b.closest('.mrow').querySelector('.reason-row[data-k="' + b.dataset.k + '"]');
-    if (on) { rr.classList.add('hide'); rr.querySelector('.reason').value = ''; }
+    if (on) { rr.classList.add('hide'); resetReason(rr); }
     else { rr.classList.remove('hide'); }
   }
 
@@ -355,13 +424,11 @@
   document.getElementById('addNf').addEventListener('click', addNfRow);
 
   function newRosterRowHtml() {
-    var ropts = '<option value="">不明</option>';
-    REASONS.forEach(function (r) { ropts += '<option>' + r + '</option>'; });
     return '<div class="mrow" data-new="1">'
       + '<div class="who"><input class="new-name" type="text" placeholder="新組員姓名">'
       + '<input class="new-contact" type="text" placeholder="聯絡方式（選填）" style="margin-top:4px">'
-      + '<div class="reason-row hide" data-k="cong"><span>崇拜沒來</span><select class="reason">' + ropts + '</select></div>'
-      + '<div class="reason-row hide" data-k="grp"><span>小組沒來</span><select class="reason">' + ropts + '</select></div>'
+      + '<div class="reason-row hide" data-k="cong"><span>崇拜沒來</span>' + reasonBtnsHtml() + '</div>'
+      + '<div class="reason-row hide" data-k="grp"><span>小組沒來</span>' + reasonBtnsHtml() + '</div>'
       + '</div>'
       + '<button class="tog on" data-k="cong">崇拜</button>'
       + '<button class="tog on" data-k="grp">小組</button>'
@@ -387,11 +454,11 @@
     var inp = row.querySelector('.new-name'); if (inp) inp.focus();
   });
 
-  document.getElementById('submit').addEventListener('click', function () {
-    if (!state.group) { alert('請先選小組'); return; }
-    var leader = document.getElementById('leader').value.trim();
-    if (!leader) { alert('請填「填報者」你的名字'); return; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
 
+  var PENDING = null;   // 預覽中、待確認送出的 payload
+
+  function buildPayload(leader) {
     var members = [].slice.call(document.querySelectorAll('#roster .mrow')).map(function (r) {
       var isNew = r.dataset.new === '1';
       var id, name;
@@ -402,8 +469,8 @@
         id: id, name: name, isNew: isNew, contact: contact,
         cong: r.querySelector('.tog[data-k="cong"]').classList.contains('on'),
         grp: r.querySelector('.tog[data-k="grp"]').classList.contains('on'),
-        congReason: r.querySelector('.reason-row[data-k="cong"] .reason').value,
-        grpReason: r.querySelector('.reason-row[data-k="grp"] .reason').value
+        congReason: reasonOf(r, 'cong'),
+        grpReason: reasonOf(r, 'grp')
       };
     }).filter(function (m) { return !m.isNew || m.name; });
     var serving = [].slice.call(document.querySelectorAll('#serving select')).map(function (s) {
@@ -419,15 +486,20 @@
       };
     }).filter(function (n) { return n.name.trim(); });
 
-    var rosterChanges = [].slice.call(document.querySelectorAll('#maintList .mnt-row')).map(function (r) {
+    var changesView = [].slice.call(document.querySelectorAll('#maintList .mnt-row')).map(function (r) {
       return {
         id: r.dataset.id,
+        name: (r.querySelector('.nm') ? r.querySelector('.nm').textContent : '').trim(),
         remote: r.querySelector('.mtog.remote').classList.contains('on'),
         leaving: r.querySelector('.mtog.leave').classList.contains('on'),
         orig: r.dataset.orig === '1'
       };
-    }).filter(function (c) { return c.leaving || c.remote !== c.orig; })
-      .map(function (c) { return { id: c.id, remote: c.remote, leaving: c.leaving }; });
+    }).filter(function (c) { return c.leaving || c.remote !== c.orig; });
+    var rosterChanges = changesView.map(function (c) { return { id: c.id, remote: c.remote, leaving: c.leaving }; });
+
+    var returningNames = [].slice.call(document.querySelectorAll('#returning input:checked')).map(function (c) {
+      return c.parentNode.textContent.replace('（回訪）', '').trim();
+    });
 
     var payload = {
       district: state.district, group: state.group,
@@ -438,38 +510,129 @@
       feedback: document.getElementById('feedback').value,
       prayer: document.getElementById('prayer').value
     };
+    return { payload: payload, changesView: changesView, returningNames: returningNames };
+  }
 
-    var btn = this; btn.disabled = true; btn.textContent = '送出中…';
+  // 按「送出」→ 先出預覽，確認後才真的送
+  document.getElementById('submit').addEventListener('click', function () {
+    if (!state.group) { alert('請先選小組'); return; }
+    var leader = document.getElementById('leader').value.trim();
+    if (!leader) { alert('請填「填報者」你的名字'); return; }
+    var b = buildPayload(leader);
+    PENDING = b.payload;
+    showPreview(b);
+  });
+
+  function absList(members, key) {
+    var out = members.filter(function (m) { return !m[key]; }).map(function (m) {
+      var r = key === 'cong' ? m.congReason : m.grpReason;
+      return esc(m.name) + '（' + (r || '不明') + '）';
+    });
+    return out.length ? out.join('、') : '<span style="color:#1f7a3d">全員出席 🎉</span>';
+  }
+
+  function showPreview(b) {
+    var p = b.payload;
+    var congIn = p.members.filter(function (m) { return m.cong; }).length;
+    var grpIn = p.members.filter(function (m) { return m.grp; }).length;
+    var tot = p.members.length;
+
+    var h = '<div class="card"><h1>送出前，請再確認一次</h1>'
+      + '<p class="sub">' + esc(p.district) + ' · ' + esc(p.group) + '　' + esc(p.date) + '　填報者：' + esc(p.leader) + '</p></div>';
+
+    h += '<div class="card"><p class="step">出席狀況</p>'
+      + '<div class="pvnums">'
+      + '<div class="stat"><div class="sub">崇拜出席</div><div class="n">' + congIn + '/' + tot + '</div></div>'
+      + '<div class="stat"><div class="sub">小組出席</div><div class="n">' + grpIn + '/' + tot + '</div></div></div>'
+      + '<div class="pvline"><span class="lb">崇拜沒來：</span>' + absList(p.members, 'cong') + '</div>'
+      + '<div class="pvline"><span class="lb">小組沒來：</span>' + absList(p.members, 'grp') + '</div></div>';
+
+    var newMembers = p.members.filter(function (m) { return m.isNew; });
+    if (newMembers.length || b.changesView.length) {
+      h += '<div class="card"><p class="step">名單異動</p><div class="pvline">';
+      newMembers.forEach(function (m) { h += '<div>＋ 新增在籍組員：' + esc(m.name) + '</div>'; });
+      b.changesView.forEach(function (c) {
+        if (c.leaving) h += '<div>－ 標記離開：' + esc(c.name) + '</div>';
+        if (c.remote !== c.orig) h += '<div>✏️ ' + (c.remote ? '標記外地生' : '取消外地生') + '：' + esc(c.name) + '</div>';
+      });
+      h += '</div></div>';
+    }
+
+    if (p.newFriends.length || b.returningNames.length) {
+      h += '<div class="card"><p class="step">新朋友</p><div class="pvline">';
+      p.newFriends.forEach(function (n) {
+        h += '<div>🆕 ' + esc(n.name) + (n.inviter ? '<span class="lb">（' + esc(n.inviter) + ' 邀請）</span>' : '') + '</div>';
+      });
+      b.returningNames.forEach(function (n) { h += '<div>🔁 ' + esc(n) + '<span class="lb">（回訪）</span></div>'; });
+      h += '</div></div>';
+    }
+
+    if (p.serving.length) {
+      h += '<div class="card"><p class="step">今天的服事</p><div class="pvline">'
+        + p.serving.map(function (s) { return '<span class="lb">' + esc(s.role) + '：</span>' + esc(s.name); }).join('　·　')
+        + '</div></div>';
+    }
+
+    h += '<div class="card"><p class="step">回饋與代禱</p>'
+      + '<div class="pvline"><span class="lb">本週回饋：</span>' + (p.feedback.trim() ? esc(p.feedback) : '<span class="lb">（未填）</span>') + '</div>'
+      + '<div class="pvline"><span class="lb">代禱事項：</span>' + (p.prayer.trim() ? esc(p.prayer) : '<span class="lb">（未填）</span>') + '</div></div>';
+
+    h += '<div class="pvbtns"><button type="button" class="pvback" id="pvBack">‹ 返回修改</button>'
+      + '<button type="button" class="submit pvgo" id="pvGo">確認送出</button></div>'
+      + '<p class="muted" style="text-align:center;margin-top:8px">按「返回修改」不會清掉任何已填內容</p>';
+
+    document.getElementById('pvbody').innerHTML = h;
+    var pv = document.getElementById('pvpage');
+    pv.style.display = 'block'; pv.scrollTop = 0;
+    document.body.style.overflow = 'hidden';
+
+    document.getElementById('pvBack').addEventListener('click', closePreview);
+    document.getElementById('pvGo').addEventListener('click', confirmSubmit);
+  }
+
+  function closePreview() {
+    document.getElementById('pvpage').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  function confirmSubmit() {
+    var payload = PENDING;
+    if (!payload) { closePreview(); return; }
+    var btn = document.getElementById('pvGo');
+    btn.disabled = true; btn.textContent = '送出中…';
+
     if (DEMO) {
-      var grp = members.filter(function (m) { return m.grp; });
+      var grp = payload.members.filter(function (m) { return m.grp; });
       setTimeout(function () {
+        closePreview();
         showDone({
-          present: grp.length, total: members.length,
-          rate: members.length ? Math.round(grp.length / members.length * 100) : 0,
-          absent: members.filter(function (m) { return !m.grp; }).map(function (m) { return m.name; }),
-          newFriends: newFriends.length + returningVisitors.length
+          present: grp.length, total: payload.members.length,
+          rate: payload.members.length ? Math.round(grp.length / payload.members.length * 100) : 0,
+          absent: payload.members.filter(function (m) { return !m.grp; }).map(function (m) { return m.name; }),
+          newFriends: payload.newFriends.length + payload.returningVisitors.length
         });
       }, 250);
-    } else {
-      var doSubmit = function () {
-        api('submitReport', payload)
-          .then(function (res) {
-            if (res && res.duplicate) {
-              var who = res.by ? ('（先前由 ' + res.by + ' 回報）') : '';
-              if (confirm('這一組今天已經回報過了' + who + '。\n要再送一次嗎？系統會以最新這次為準。')) {
-                payload.force = true; btn.disabled = true; btn.textContent = '送出中…'; doSubmit();
-              } else {
-                btn.disabled = false; btn.textContent = '送出本週回報';
-              }
-              return;
-            }
-            showDone(res);
-          })
-          .catch(function (err) { btn.disabled = false; btn.textContent = '送出本週回報'; alert('送出失敗：' + err.message); });
-      };
-      doSubmit();
+      return;
     }
-  });
+    var doSubmit = function () {
+      api('submitReport', payload)
+        .then(function (res) {
+          if (res && res.duplicate) {
+            var who = res.by ? ('（先前由 ' + res.by + ' 回報）') : '';
+            if (confirm('這一組今天已經回報過了' + who + '。\n要再送一次嗎？系統會以最新這次為準。')) {
+              payload.force = true; btn.disabled = true; btn.textContent = '送出中…'; doSubmit();
+            } else {
+              btn.disabled = false; btn.textContent = '確認送出';
+            }
+            return;
+          }
+          closePreview();
+          showDone(res);
+        })
+        .catch(function (err) { btn.disabled = false; btn.textContent = '確認送出'; alert('送出失敗：' + err.message); });
+    };
+    doSubmit();
+  }
 
   function showDone(res) {
     document.getElementById('rosterArea').classList.add('hide');
